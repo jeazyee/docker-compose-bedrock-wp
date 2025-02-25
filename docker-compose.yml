@@ -32,7 +32,7 @@ services:
     restart: always
 
   db:
-    image: mariadb:latest
+    image: mariadb:11.4
     volumes:
       - database:/var/lib/mysql
     environment:
