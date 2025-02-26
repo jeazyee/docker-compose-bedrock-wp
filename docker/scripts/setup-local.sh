@@ -80,12 +80,31 @@ fi
 
 # Wait for services to start
 echo "Waiting for services to start..."
-sleep 5
+sleep 10  # Increased from 5 to 10 seconds
 
-# Check if services are running
-if curl -s -I "http://$DOMAIN" > /dev/null 2>&1; then
-    echo "Setup completed! Your site should be available at http://$DOMAIN"
-else
+# Enhanced health check
+MAX_RETRIES=5
+RETRY_COUNT=0
+
+while [ $RETRY_COUNT -lt $MAX_RETRIES ]; do
+    if curl -s -I "http://$DOMAIN" > /dev/null 2>&1; then
+        echo "Setup completed! Your site should be available at http://$DOMAIN"
+        echo "Testing REST API access..."
+        if curl -s -I "http://$DOMAIN/wp-json/" > /dev/null 2>&1; then
+            echo "REST API is accessible"
+            exit 0
+        else
+            echo "REST API might not be accessible. Please check your WordPress configuration"
+        fi
+        break
+    else
+        echo "Waiting for service to become available... (Attempt $((RETRY_COUNT+1))/$MAX_RETRIES)"
+        sleep 5
+        RETRY_COUNT=$((RETRY_COUNT+1))
+    fi
+done
+
+if [ $RETRY_COUNT -eq $MAX_RETRIES ]; then
     echo "Warning: Site may not be accessible yet. Please check Docker logs for errors."
     echo "You can try: docker compose logs"
 fi
