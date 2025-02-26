@@ -6,32 +6,35 @@ services:
       - db
     volumes:
       - .:/var/www/html:rw
-      - uploads:/var/www/html/web/app/uploads:rw  # Switch back to named volume
+      - uploads:/var/www/html/web/app/uploads:rw  
     environment:
       APP_ENV: ${APP_ENV:-development}
       APP_DEBUG: ${APP_DEBUG:-true}
-      APP_URL: ${APP_URL:-http://localhost:8080}
+
+      APP_DOMAIN: ${APP_DOMAIN:-localhost}
+      APP_PROTOCOL: ${APP_PROTOCOL:-http}
+      APP_URL: ${APP_URL:-${APP_PROTOCOL:-http}://${APP_DOMAIN:-localhost}}
 
       WP_ENV: ${APP_ENV:-development}
-      WP_HOME: ${APP_URL:-http://localhost:8080}
-      WP_SITEURL: ${APP_URL:-http://localhost:8080}/wp
+      WP_HOME: ${APP_URL:-${APP_PROTOCOL:-http}://${APP_DOMAIN:-localhost}}
+      WP_SITEURL: ${APP_URL:-${APP_PROTOCOL:-http}://${APP_DOMAIN:-localhost}}/wp
+
+      # Needed for the internal API routing
+      WP_LOCAL_HOST: nginx
 
       DB_NAME: ${DB_NAME:-bedrock}
       DB_USER: ${DB_USER:-user}
       DB_PASSWORD: ${DB_PASSWORD:-password}
       DB_HOST: db
 
-      AUTH_KEY: ${AUTH_KEY}
-      SECURE_AUTH_KEY: ${SECURE_AUTH_KEY}
-      LOGGED_IN_KEY: ${LOGGED_IN_KEY}
-      NONCE_KEY: ${NONCE_KEY}
-      AUTH_SALT: ${AUTH_SALT}
-      SECURE_AUTH_SALT: ${SECURE_AUTH_SALT}
-      LOGGED_IN_SALT: ${LOGGED_IN_SALT}
-      NONCE_SALT: ${NONCE_SALT}
-      DOMAIN_CURRENT_SITE: ${APP_DOMAIN:-localhost}
-    extra_hosts:
-      - "${APP_DOMAIN:-localhost}:127.0.0.1"
+      AUTH_KEY: ${AUTH_KEY:-generateme}
+      SECURE_AUTH_KEY: ${SECURE_AUTH_KEY:-generateme}
+      LOGGED_IN_KEY: ${LOGGED_IN_KEY:-generateme}
+      NONCE_KEY: ${NONCE_KEY:-generateme}
+      AUTH_SALT: ${AUTH_SALT:-generateme}
+      SECURE_AUTH_SALT: ${SECURE_AUTH_SALT:-generateme}
+      LOGGED_IN_SALT: ${LOGGED_IN_SALT:-generateme}
+      NONCE_SALT: ${NONCE_SALT:-generateme}
     restart: always
     networks:
       - wordpress_net
@@ -63,7 +66,7 @@ services:
     depends_on:
       - bedrock
     ports:
-      - "80:80"  # Changed from 8080 to 80 for proper domain handling
+      - "80:80"
     environment:
       - APP_DOMAIN=${APP_DOMAIN:-localhost}
     command: >
@@ -73,9 +76,7 @@ services:
       - ./docker/nginx/default.conf:/etc/nginx/conf.d/default.conf.template:ro
       - ./docker/nginx/nginx.conf:/etc/nginx/nginx.conf:ro
       - .:/var/www/html:rw
-      - uploads:/var/www/html/web/app/uploads:rw  # Add uploads volume to nginx
-    extra_hosts:
-      - "${APP_DOMAIN:-localhost}:127.0.0.1"
+      - uploads:/var/www/html/web/app/uploads:rw
     restart: always
     networks:
       - wordpress_net
