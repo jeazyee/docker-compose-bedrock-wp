@@ -1,6 +1,9 @@
 #!/bin/bash
 set -e
 
+# Configure Git to trust the /var/www/html directory
+git config --global --add safe.directory /var/www/html
+
 # Add hostname entries for internal network resolution
 echo "127.0.0.1 localhost" >> /etc/hosts
 echo "$(getent hosts nginx | awk '{ print $1 }') ${APP_DOMAIN}" >> /etc/hosts

@@ -95,6 +95,9 @@ RUN echo "upload_max_filesize = 64M" > /usr/local/etc/php/conf.d/uploads.ini \
 # Set working directory to the Bedrock project root
 WORKDIR /var/www/html
 
+# Configure Git to trust the working directory
+RUN git config --global --add safe.directory /var/www/html
+
 # Copy the Bedrock files into the container
 COPY . /var/www/html
 
@@ -103,9 +106,6 @@ RUN mkdir -p /var/www/html/web/app/mu-plugins
 
 # Set the ownership of the Bedrock files to the www-data user
 RUN chown -R www-data:www-data /var/www/html && find /var/www/html/ -type f -exec chmod 644 {} \; && find /var/www/html/ -type d -exec chmod 755 {} \;
-
-# Install the project dependencies with Composer
-RUN composer install --working-dir=/var/www/html
 
 # Make the entrypoint script executable
 COPY ./docker/scripts/docker-entrypoint.sh /usr/local/bin/
