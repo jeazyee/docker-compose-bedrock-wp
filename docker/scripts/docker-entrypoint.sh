@@ -25,6 +25,36 @@ sudo -u www-data git config --list > /dev/null || {
 echo "127.0.0.1 localhost" >> /etc/hosts
 echo "$(getent hosts nginx | awk '{ print $1 }') ${APP_DOMAIN}" >> /etc/hosts
 
+# Ensure proper directory permissions for Composer
+echo "Setting up directory permissions..."
+mkdir -p /var/www/html/vendor
+chown -R www-data:www-data /var/www/html
+
+# Run composer install if needed - with extra debug output
+if [ ! -d /var/www/html/vendor/composer ]; then
+    echo "Vendor directory empty or incomplete. Running composer install..."
+    ls -la /var/www/html/
+    
+    # Create directories that Composer needs with proper permissions
+    mkdir -p /var/www/html/vendor
+    chown -R www-data:www-data /var/www/html/vendor
+    
+    # Run Composer install as www-data with debug output
+    echo "Running composer as www-data..."
+    sudo -u www-data bash -c "cd /var/www/html && composer install -v"
+    
+    # Verify installation result
+    if [ $? -ne 0 ]; then
+        echo "Composer install failed. Trying with different permissions..."
+        # Fallback approach with more permissive settings
+        chmod -R 777 /var/www/html/vendor
+        sudo -u www-data bash -c "cd /var/www/html && composer install -v"
+    fi
+    
+    echo "Composer install completed. Directory listing:"
+    ls -la /var/www/html/vendor/
+fi
+
 # Wait for database
 wait_for_db() {
     echo "Waiting for database connection..."

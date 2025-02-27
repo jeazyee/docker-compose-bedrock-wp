@@ -1,11 +1,11 @@
-# Docker Bedrock - WordPress Development Environment
+# Docker Compose for Bedrock WordPress
 
 <p align="center">
   <img src="https://cdn.roots.io/app/uploads/logo-bedrock.svg" height="100" alt="Bedrock Logo">
   <img src="https://www.docker.com/wp-content/uploads/2022/03/Moby-logo.png" height="100" alt="Docker Logo">
 </p>
 
-A complete, ready-to-use Docker environment for [Bedrock](https://roots.io/bedrock/) WordPress development. This project combines the modern WordPress stack of Bedrock with Docker to create a powerful, consistent, and easily deployable development environment.
+This repository contains Docker configuration for running a WordPress site using Roots Bedrock.
 
 ## Features
 
@@ -18,23 +18,29 @@ A complete, ready-to-use Docker environment for [Bedrock](https://roots.io/bedro
 - **Scalable Architecture** - Ready for local development and production deployment
 - **Secure by Default** - Environmental configuration and proper file separation
 
-## Requirements
+## Getting Started
 
-- [Docker](https://www.docker.com/get-started)
-- [Docker Compose](https://docs.docker.com/compose/install/) (included with Docker Desktop)
-- Git (for version control)
+### Prerequisites
+
+- Docker and Docker Compose
+- Git
 
 ## Complete Installation Guide
 
-### Initial Setup
+### Setup
 
-1. **Clone the repository**:
+1. Clone this repository
    ```bash
    git clone https://github.com/yourusername/docker-compose-bedrock-wp.git myproject
    cd myproject
    ```
 
-2. **Setup a local domain and environment**:
+2. Copy the example environment file:
+   ```bash
+   cp .env.docker-example .env
+   ```
+
+3. **Setup a local domain and environment**:
    
    Using the setup script (recommended for beginners):
    ```bash
@@ -52,12 +58,12 @@ A complete, ready-to-use Docker environment for [Bedrock](https://roots.io/bedro
    # Set APP_DOMAIN to your local domain (mysite.local)
    ```
 
-3. **Start the Docker environment**:
+4. Start the Docker containers:
    ```bash
-   docker compose up -d
+   docker-compose up -d
    ```
 
-4. **Initialize WordPress**:
+5. **Initialize WordPress**:
    ```bash
    # Install WordPress
    ./wp core install --url=http://mysite.local --title="My Site" --admin_user=admin --admin_password=password --admin_email=admin@example.com
@@ -66,8 +72,31 @@ A complete, ready-to-use Docker environment for [Bedrock](https://roots.io/bedro
    ./wp plugin install redis-cache query-monitor --activate
    ```
 
-5. **Access your site**:
+6. **Access your site**:
    - Frontend: [http://mysite.local](http://mysite.local)
    - WordPress Admin: [http://mysite.local/wp/wp-admin](http://mysite.local/wp/wp-admin)
+
+## Troubleshooting
+
+### Vendor Directory Issues
+
+If you encounter issues with the vendor directory not being created, you can try:
+
+```bash
+# Create the vendor directory with proper permissions
+docker-compose exec bedrock mkdir -p /var/www/html/vendor
+docker-compose exec bedrock chown -R www-data:www-data /var/www/html/vendor
+
+# Run composer install manually
+docker-compose exec -u www-data bedrock composer install
+```
+
+### Git Permissions
+
+If you encounter Git permission issues, you can resolve them with:
+
+```bash
+docker-compose exec bedrock git config --global --add safe.directory /var/www/html
+```
 
 ### Directory Structure Explained
