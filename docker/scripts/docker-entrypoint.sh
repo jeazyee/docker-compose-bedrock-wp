@@ -10,7 +10,7 @@ if [ ! -d /var/www/.config/git ]; then
     mkdir -p /var/www/.config/git
     echo "[safe]" > /var/www/.config/git/config
     echo "    directory = /var/www/html" >> /var/www/.config/git/config
-    chown -R www-data:www-data /var/www/.config
+    chown -R www-data:www-data /var/www/.config || echo "Warning: Could not set ownership for /var/www/.config"
 fi
 
 # Test Git as www-data to ensure it works
@@ -25,10 +25,16 @@ sudo -u www-data git config --list > /dev/null || {
 echo "127.0.0.1 localhost" >> /etc/hosts
 echo "$(getent hosts nginx | awk '{ print $1 }') ${APP_DOMAIN}" >> /etc/hosts
 
-# Ensure proper directory permissions for Composer
+# Ensure proper directory permissions for Composer - with error handling
 echo "Setting up directory permissions..."
 mkdir -p /var/www/html/vendor
-chown -R www-data:www-data /var/www/html
+
+# Use a function to attempt ownership changes but continue on error
+set_ownership() {
+    chown -R www-data:www-data "$1" 2>/dev/null || echo "Notice: Could not set ownership for $1 (this is often normal with mounted volumes)"
+}
+
+set_ownership /var/www/html
 
 # Run composer install if needed - with extra debug output
 if [ ! -d /var/www/html/vendor/composer ]; then
@@ -37,19 +43,15 @@ if [ ! -d /var/www/html/vendor/composer ]; then
     
     # Create directories that Composer needs with proper permissions
     mkdir -p /var/www/html/vendor
-    chown -R www-data:www-data /var/www/html/vendor
+    chmod 777 /var/www/html/vendor || echo "Notice: Could not chmod /var/www/html/vendor"
     
     # Run Composer install as www-data with debug output
     echo "Running composer as www-data..."
-    sudo -u www-data bash -c "cd /var/www/html && composer install -v"
-    
-    # Verify installation result
-    if [ $? -ne 0 ]; then
-        echo "Composer install failed. Trying with different permissions..."
-        # Fallback approach with more permissive settings
-        chmod -R 777 /var/www/html/vendor
-        sudo -u www-data bash -c "cd /var/www/html && composer install -v"
-    fi
+    sudo -u www-data bash -c "cd /var/www/html && composer install -v" || {
+        echo "Composer install as www-data failed. Trying with different approach..."
+        # Fallback approach with regular user
+        cd /var/www/html && composer install -v
+    }
     
     echo "Composer install completed. Directory listing:"
     ls -la /var/www/html/vendor/
@@ -84,21 +86,23 @@ setup_wp_cli() {
 path: web/wp
 url: ${WP_HOME}
 EOF
-        chown www-data:www-data /var/www/html/wp-cli.yml
+        chmod 664 /var/www/html/wp-cli.yml || echo "Notice: Could not chmod wp-cli.yml"
     fi
 }
 
 # Install composer dependencies if they're not installed
 if [ ! -d /var/www/html/vendor ]; then
-    sudo -u www-data composer install --working-dir=/var/www/html
+    sudo -u www-data composer install --working-dir=/var/www/html || {
+        echo "Composer install as www-data failed. Trying with root..."
+        composer install --working-dir=/var/www/html
+    }
 fi
 
 # Ensure uploads directory exists and is writable
 if [ ! -d /var/www/html/web/app/uploads ]; then
     mkdir -p /var/www/html/web/app/uploads
 fi
-chown -R www-data:www-data /var/www/html/web/app/uploads
-chmod -R 775 /var/www/html/web/app/uploads
+chmod -R 777 /var/www/html/web/app/uploads || echo "Notice: Could not chmod uploads directory"
 
 # Setup WP-CLI for Bedrock
 setup_wp_cli
