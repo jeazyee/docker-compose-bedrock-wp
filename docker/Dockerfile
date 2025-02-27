@@ -96,7 +96,13 @@ RUN echo "upload_max_filesize = 64M" > /usr/local/etc/php/conf.d/uploads.ini \
 WORKDIR /var/www/html
 
 # Configure Git to trust the working directory
-RUN git config --global --add safe.directory /var/www/html
+# Apply this for both root and www-data users to ensure it works in all contexts
+RUN git config --system --add safe.directory /var/www/html && \
+    git config --global --add safe.directory /var/www/html && \
+    mkdir -p /var/www/.config/git && \
+    echo "[safe]" > /var/www/.config/git/config && \
+    echo "    directory = /var/www/html" >> /var/www/.config/git/config && \
+    chown -R www-data:www-data /var/www/.config
 
 # Copy the Bedrock files into the container
 COPY . /var/www/html
@@ -107,9 +113,10 @@ RUN mkdir -p /var/www/html/web/app/mu-plugins
 # Set the ownership of the Bedrock files to the www-data user
 RUN chown -R www-data:www-data /var/www/html && find /var/www/html/ -type f -exec chmod 644 {} \; && find /var/www/html/ -type d -exec chmod 755 {} \;
 
-# Make the entrypoint script executable
+# Make the entrypoint script executable and ensure it's owned by root
 COPY ./docker/scripts/docker-entrypoint.sh /usr/local/bin/
-RUN chmod +x /usr/local/bin/docker-entrypoint.sh
+RUN chmod +x /usr/local/bin/docker-entrypoint.sh && \
+    chown root:root /usr/local/bin/docker-entrypoint.sh
 
 ENTRYPOINT ["docker-entrypoint.sh"]
 CMD ["php-fpm"]

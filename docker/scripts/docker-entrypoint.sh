@@ -1,8 +1,25 @@
 #!/bin/bash
 set -e
 
-# Configure Git to trust the /var/www/html directory
+# Make sure Git trusts the directory for all users
+git config --system --add safe.directory /var/www/html
 git config --global --add safe.directory /var/www/html
+
+# Ensure www-data can use Git
+if [ ! -d /var/www/.config/git ]; then
+    mkdir -p /var/www/.config/git
+    echo "[safe]" > /var/www/.config/git/config
+    echo "    directory = /var/www/html" >> /var/www/.config/git/config
+    chown -R www-data:www-data /var/www/.config
+fi
+
+# Test Git as www-data to ensure it works
+sudo -u www-data git config --list > /dev/null || {
+    echo "Warning: Git is still having permission issues"
+    # Fallback to force Git to work with this directory
+    git config --global --add safe.directory '*'
+    sudo -u www-data git config --global --add safe.directory '*'
+}
 
 # Add hostname entries for internal network resolution
 echo "127.0.0.1 localhost" >> /etc/hosts
