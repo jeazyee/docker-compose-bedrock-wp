@@ -101,11 +101,11 @@ COPY . /var/www/html
 # Make sure mu-plugins directory exists
 RUN mkdir -p /var/www/html/web/app/mu-plugins
 
-# Install the project dependencies with Composer
-RUN composer install --working-dir=/var/www/html
-
 # Set the ownership of the Bedrock files to the www-data user
 RUN chown -R www-data:www-data /var/www/html && find /var/www/html/ -type f -exec chmod 644 {} \; && find /var/www/html/ -type d -exec chmod 755 {} \;
+
+# Install the project dependencies with Composer
+RUN composer install --working-dir=/var/www/html
 
 # Make the entrypoint script executable
 COPY ./docker/scripts/docker-entrypoint.sh /usr/local/bin/
