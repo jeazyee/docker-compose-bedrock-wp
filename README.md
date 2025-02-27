@@ -1,105 +1,73 @@
-<p align="center">
-  <a href="https://roots.io/bedrock/">
-    <img alt="Bedrock" src="https://cdn.roots.io/app/uploads/logo-bedrock.svg" height="100">
-  </a>
-</p>
+# Docker Bedrock - WordPress Development Environment
 
 <p align="center">
-  <a href="LICENSE.md">
-    <img alt="MIT License" src="https://img.shields.io/github/license/roots/bedrock?color=%23525ddc&style=flat-square" />
-  </a>
-
-  <a href="https://packagist.org/packages/roots/bedrock">
-    <img alt="Packagist" src="https://img.shields.io/packagist/v/roots/bedrock.svg?style=flat-square" />
-  </a>
-
-  <a href="https://github.com/roots/bedrock/actions/workflows/ci.yml">
-    <img alt="Build Status" src="https://img.shields.io/github/workflow/status/roots/bedrock/CI?style=flat-square" />
-  </a>
-
-  <a href="https://twitter.com/rootswp">
-    <img alt="Follow Roots" src="https://img.shields.io/twitter/follow/rootswp.svg?style=flat-square&color=1da1f2" />
-  </a>
+  <img src="https://cdn.roots.io/app/uploads/logo-bedrock.svg" height="100" alt="Bedrock Logo">
+  <img src="https://www.docker.com/wp-content/uploads/2022/03/Moby-logo.png" height="100" alt="Docker Logo">
 </p>
 
-<p align="center">
-  <strong>A modern WordPress stack</strong>
-</p>
-
-<p align="center">
-  <a href="https://roots.io/"><strong><code>Website</code></strong></a> &nbsp;&nbsp; <a href="https://docs.roots.io/bedrock/master/installation/"><strong><code>Documentation</code></strong></a> &nbsp;&nbsp; <a href="https://github.com/roots/bedrock/releases"><strong><code>Releases</code></strong></a> &nbsp;&nbsp; <a href="https://discourse.roots.io/"><strong><code>Support</code></strong></a>
-</p>
-
-## Sponsors
-
-**Bedrock** is an open source project and completely free to use.
-
-However, the amount of effort needed to maintain and develop new features and products within the Roots ecosystem is not sustainable without proper financial backing. If you have the capability, please consider [sponsoring Roots](https://github.com/sponsors/roots).
-
-<p align="center"><a href="https://github.com/sponsors/roots"><img height="32" src="https://img.shields.io/badge/sponsor%20roots-525ddc?logo=github&logoColor=ffffff&message=" alt="Sponsor Roots"></a></p>
-
-<div align="center">
-<a href="https://k-m.com/"><img src="https://cdn.roots.io/app/uploads/km-digital.svg" alt="KM Digital" width="148" height="111"></a> <a href="https://carrot.com/"><img src="https://cdn.roots.io/app/uploads/carrot.svg" alt="Carrot" width="148" height="111"></a> <a href="https://wordpress.com/"><img src="https://cdn.roots.io/app/uploads/wordpress.svg" alt="WordPress.com" width="148" height="111"></a> <a href="https://pantheon.io/"><img src="https://cdn.roots.io/app/uploads/pantheon.svg" alt="Pantheon" width="148" height="111"></a>
-</div>
-
-## Overview
-
-Bedrock is a modern WordPress stack that helps you get started with the best development tools and project structure.
-
-Much of the philosophy behind Bedrock is inspired by the [Twelve-Factor App](http://12factor.net/) methodology including the [WordPress specific version](https://roots.io/twelve-factor-wordpress/).
+A complete, ready-to-use Docker environment for [Bedrock](https://roots.io/bedrock/) WordPress development. This project combines the modern WordPress stack of Bedrock with Docker to create a powerful, consistent, and easily deployable development environment.
 
 ## Features
 
-- Better folder structure
-- Dependency management with [Composer](https://getcomposer.org)
-- Easy WordPress configuration with environment specific files
-- Environment variables with [Dotenv](https://github.com/vlucas/phpdotenv)
-- Autoloader for mu-plugins (use regular plugins as mu-plugins)
-- Enhanced security (separated web root and secure passwords with [wp-password-bcrypt](https://github.com/roots/wp-password-bcrypt))
+- **Zero Configuration Setup** - Run a single command to get up and running
+- **Modern WordPress Stack** - Based on Bedrock by Roots
+- **Docker-based** - Consistent environment across all team members
+- **Performance Optimized** - Nginx with FastCGI caching and PHP-FPM
+- **Development Ready** - Includes all necessary tooling and extensions
+- **WP-CLI Support** - Easily manage your WordPress installation
+- **Scalable Architecture** - Ready for local development and production deployment
+- **Secure by Default** - Environmental configuration and proper file separation
 
 ## Requirements
 
-- PHP >= 7.4
-- Composer - [Install](https://getcomposer.org/doc/00-intro.md#installation-linux-unix-osx)
+- [Docker](https://www.docker.com/get-started)
+- [Docker Compose](https://docs.docker.com/compose/install/) (included with Docker Desktop)
+- Git (for version control)
 
-## Installation
+## Complete Installation Guide
 
-1. Create a new project:
-   ```sh
-   $ composer create-project roots/bedrock
+### Initial Setup
+
+1. **Clone the repository**:
+   ```bash
+   git clone https://github.com/yourusername/docker-compose-bedrock-wp.git myproject
+   cd myproject
    ```
-   By default, this installs the `dist` version of all dependent packages.  To install the `source` versions instead, update `composer.json` as follows:
-   ```json
-    "preferred-install": {
-      "roots/wordpress-no-content": "dist",
-      "*": "source"
-    },
+
+2. **Setup a local domain and environment**:
+   
+   Using the setup script (recommended for beginners):
+   ```bash
+   sudo ./docker/scripts/setup-local.sh mysite.local
    ```
-2. Update environment variables in the `.env` file. Wrap values that may contain non-alphanumeric characters with quotes, or they may be incorrectly parsed.
+   
+   Or manually:
+   ```bash
+   # Add to your hosts file
+   echo "127.0.0.1 mysite.local" | sudo tee -a /etc/hosts
+   
+   # Create .env file
+   cp .env.example .env
+   # Edit .env file with your preferred settings
+   # Set APP_DOMAIN to your local domain (mysite.local)
+   ```
 
-- Database variables
-  - `DB_NAME` - Database name
-  - `DB_USER` - Database user
-  - `DB_PASSWORD` - Database password
-  - `DB_HOST` - Database host
-  - Optionally, you can define `DATABASE_URL` for using a DSN instead of using the variables above (e.g. `mysql://user:password@127.0.0.1:3306/db_name`)
-- `WP_ENV` - Set to environment (`development`, `staging`, `production`)
-- `WP_HOME` - Full URL to WordPress home (https://example.com)
-- `WP_SITEURL` - Full URL to WordPress including subdirectory (https://example.com/wp)
-- `AUTH_KEY`, `SECURE_AUTH_KEY`, `LOGGED_IN_KEY`, `NONCE_KEY`, `AUTH_SALT`, `SECURE_AUTH_SALT`, `LOGGED_IN_SALT`, `NONCE_SALT`
-  - Generate with [wp-cli-dotenv-command](https://github.com/aaemnnosttv/wp-cli-dotenv-command)
-  - Generate with [our WordPress salts generator](https://roots.io/salts.html)
+3. **Start the Docker environment**:
+   ```bash
+   docker compose up -d
+   ```
 
-3. Add theme(s) in `web/app/themes/` as you would for a normal WordPress site
-4. Set the document root on your webserver to Bedrock's `web` folder: `/path/to/site/web/`
-5. Access WordPress admin at `https://example.com/wp/wp-admin/`
+4. **Initialize WordPress**:
+   ```bash
+   # Install WordPress
+   ./wp core install --url=http://mysite.local --title="My Site" --admin_user=admin --admin_password=password --admin_email=admin@example.com
+   
+   # Optional: Install some starter plugins
+   ./wp plugin install redis-cache query-monitor --activate
+   ```
 
-## Community
+5. **Access your site**:
+   - Frontend: [http://mysite.local](http://mysite.local)
+   - WordPress Admin: [http://mysite.local/wp/wp-admin](http://mysite.local/wp/wp-admin)
 
-Keep track of development and community news.
-
-- Join us on Discord by [sponsoring us on GitHub](https://github.com/sponsors/roots)
-- Participate on the [Roots Discourse](https://discourse.roots.io/)
-- Follow [@rootswp on Twitter](https://twitter.com/rootswp)
-- Read and subscribe to the [Roots Blog](https://roots.io/blog/)
-- Subscribe to the [Roots Newsletter](https://roots.io/subscribe/)
+### Directory Structure Explained

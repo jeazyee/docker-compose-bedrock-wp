@@ -1,0 +1,13 @@
+#!/bin/bash
+
+# Get the directory of this script
+DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
+
+# Move to the project directory
+cd "$DIR"
+
+# Run WP-CLI in the bedrock container as www-data
+docker-compose exec bedrock wp-user "$@"
+
+# Return to original directory
+cd - > /dev/null
