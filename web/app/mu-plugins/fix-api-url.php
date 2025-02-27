@@ -6,9 +6,10 @@
  * Author: Jitendra Bodmann
  */
 
-/**
+
+/*
  * Fix WordPress REST API URLs in Docker containers by replacing app_domain with the nginx service name
- */
+ * /
 add_filter('rest_url', function ($url) {
     // Get the WP_LOCAL_HOST from environment if configured
     $wp_local_host = getenv('WP_LOCAL_HOST');
@@ -23,9 +24,9 @@ add_filter('rest_url', function ($url) {
     return $url;
 });
 
-/**
+/*
  * Fix HTTP requests made from within WordPress
- */
+ * /
 add_action('http_api_curl', function ($handle) {
     $wp_local_host = getenv('WP_LOCAL_HOST');
     
@@ -40,3 +41,4 @@ add_action('http_api_curl', function ($handle) {
         }
     }
 });
+*/
