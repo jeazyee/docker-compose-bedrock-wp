@@ -97,11 +97,6 @@ install_wordpress() {
     fi
 }
 
-# Install composer dependencies if they're not installed
-if [ ! -d /var/www/html/vendor ]; then
-    sudo -u www-data composer install --working-dir=/var/www/html
-fi
-
 # Ensure uploads directory exists and is writable
 if [ ! -d /var/www/html/web/app/uploads ]; then
     mkdir -p /var/www/html/web/app/uploads
@@ -111,6 +106,9 @@ chmod -R 775 /var/www/html/web/app/uploads
 
 # Setup WP-CLI for Bedrock
 setup_wp_cli
+
+cd /var/www/html
+composer install
 
 # If the first argument is "wp"
 if [ "$1" = "wp" ]; then

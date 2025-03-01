@@ -53,7 +53,7 @@ RUN pecl install redis \
     && docker-php-ext-enable redis
 
 # Install Composer
-RUN curl -sS https://getcomposer.org/installer | php -- --install-dir=/usr/local/bin --filename=composer
+COPY --from=composer:latest /usr/bin/composer /usr/bin/composer
 
 # Install WP-CLI
 RUN curl -O https://raw.githubusercontent.com/wp-cli/builds/gh-pages/phar/wp-cli.phar \
@@ -101,14 +101,11 @@ COPY ./docker/scripts/wp-cron.sh /usr/local/bin/wp-cron.sh
 # Copy the Bedrock files into the container
 COPY . /var/www/html
 
-# Make sure mu-plugins directory exists
-RUN mkdir -p /var/www/html/web/app/mu-plugins
-
-# Install the project dependencies with Composer
-RUN composer install --working-dir=/var/www/html
-
 # Set the ownership of the Bedrock files to the www-data user
 RUN chown -R www-data:www-data /var/www/html && find /var/www/html/ -type f -exec chmod 644 {} \; && find /var/www/html/ -type d -exec chmod 755 {} \;
+
+# Fix Git dubious ownership issue
+RUN git config --global --add safe.directory /var/www/html
 
 # Make the entrypoint script executable
 COPY ./docker/scripts/docker-entrypoint.sh /usr/local/bin/
