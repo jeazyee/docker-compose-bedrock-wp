@@ -38,6 +38,58 @@ EOF
     fi
 }
 
+# Setup WordPress cron job
+setup_wp_cron() {
+    # Make sure the cron script is executable
+    chmod +x /usr/local/bin/wp-cron.sh
+    
+    # Create a crontab file
+    echo "*/5 * * * * /usr/local/bin/wp-cron.sh" > /etc/cron.d/wp-cron
+    chmod 0644 /etc/cron.d/wp-cron
+    
+    # Start cron service
+    service cron start
+    echo "WordPress cron service started"
+}
+
+# Install WordPress using WP-CLI (minimal setup)
+install_wordpress() {
+    # Check if WordPress is already installed
+    if ! sudo -E -u www-data wp core is-installed; then
+        echo "WordPress is not installed. Setting up a new WordPress installation..."
+        
+        # Check for required environment variables
+        if [ -z "$WP_ADMIN_PASSWORD" ]; then
+            echo "Error: WP_ADMIN_PASSWORD environment variable is required"
+            return 1
+        fi
+        
+        # Set default values
+        WP_ADMIN_USER=${WP_ADMIN_USER:-admin}
+        WP_ADMIN_EMAIL=${WP_ADMIN_EMAIL:-admin@example.com}
+        WP_TITLE=${WP_TITLE:-"WordPress Site"}
+        
+        # Core install
+        echo "Installing WordPress at URL: $WP_HOME"
+        sudo -E -u www-data wp core install \
+            --url="$WP_HOME" \
+            --title="$WP_TITLE" \
+            --admin_user="$WP_ADMIN_USER" \
+            --admin_password="$WP_ADMIN_PASSWORD" \
+            --admin_email="$WP_ADMIN_EMAIL" \
+            --skip-email
+            
+        echo "WordPress installed successfully!"
+        
+        # Update permalink structure
+        sudo -E -u www-data wp rewrite structure '/%postname%/' --url="$WP_HOME"
+        
+        echo "Installation complete! You can login at ${WP_HOME}/wp/wp-admin/"
+    else
+        echo "WordPress is already installed."
+    fi
+}
+
 # Install composer dependencies if they're not installed
 if [ ! -d /var/www/html/vendor ]; then
     sudo -u www-data composer install --working-dir=/var/www/html
@@ -70,6 +122,22 @@ elif [ "$1" = "wp-user" ]; then
 elif [ "${1#-}" = "php-fpm" ]; then
     # Wait for database to be ready
     wait_for_db
+    
+    # Setup WordPress cron
+    setup_wp_cron
+    
+    # Install WordPress if it's not installed
+    if [ "${WP_AUTO_INSTALL:-false}" = "true" ]; then
+        install_wordpress
+    fi
+    
+    # Fix recovery_mode_clean_expired_keys event if that was causing problems
+    if [ "${WP_FIX_RECOVERY_EVENT:-false}" = "true" ]; then
+        echo "Fixing recovery_mode_clean_expired_keys event..."
+        sudo -E -u www-data wp cron event unschedule recovery_mode_clean_expired_keys
+        sudo -E -u www-data wp cron event schedule recovery_mode_clean_expired_keys now hourly
+        echo "Recovery mode event fixed."
+    fi
     
     >&2 echo "Starting PHP-FPM server..."
 fi

@@ -1,6 +1,6 @@
 FROM php:8.2-fpm
 
-# Install system dependencies
+# Install system dependencies including cron
 RUN apt-get update && apt-get install -y \
     default-mysql-client \
     libpng-dev \
@@ -18,6 +18,8 @@ RUN apt-get update && apt-get install -y \
     git \
     openssl \
     curl \
+    cron \
+    sudo \
     && rm -rf /var/lib/apt/lists/*
 
 # Configure and install PHP extensions
@@ -74,10 +76,8 @@ RUN echo '#!/bin/bash' > /usr/local/bin/wp-user && \
     chmod +x /usr/local/bin/wp-user && \
     echo 'alias wpuser="wp-user"' >> /etc/bash.bashrc
 
-# Install sudo so we can switch to www-data user
-RUN apt-get update && apt-get install -y sudo && \
-    rm -rf /var/lib/apt/lists/* && \
-    echo "www-data ALL=(ALL) NOPASSWD:ALL" >> /etc/sudoers
+# Configure sudo for www-data user
+RUN echo "www-data ALL=(ALL) NOPASSWD:ALL" >> /etc/sudoers
 
 # Configure PHP settings for WordPress
 RUN echo "upload_max_filesize = 64M" > /usr/local/etc/php/conf.d/uploads.ini \
@@ -94,6 +94,9 @@ RUN echo "upload_max_filesize = 64M" > /usr/local/etc/php/conf.d/uploads.ini \
 
 # Set working directory to the Bedrock project root
 WORKDIR /var/www/html
+
+# Copy WordPress cron script
+COPY ./docker/scripts/wp-cron.sh /usr/local/bin/wp-cron.sh
 
 # Copy the Bedrock files into the container
 COPY . /var/www/html
