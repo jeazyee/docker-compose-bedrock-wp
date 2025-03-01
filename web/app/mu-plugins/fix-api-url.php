@@ -8,6 +8,7 @@
 
 /**
  * Fix WordPress REST API URLs in Docker containers by replacing app_domain with the nginx service name
+ * and ensuring HTTP protocol is used for local development
  */
 add_filter('rest_url', function ($url) {
     // Get the WP_LOCAL_HOST from environment if configured
@@ -17,7 +18,10 @@ add_filter('rest_url', function ($url) {
     // Only modify internal requests from the PHP container
     if (!empty($wp_local_host) && strpos($url, $app_domain) !== false) {
         // Replace localhost with the nginx service name for internal requests
-        return str_replace($app_domain, $wp_local_host, $url);
+        $url = str_replace($app_domain, $wp_local_host, $url);
+        
+        // Also replace HTTPS with HTTP for local development
+        $url = str_replace('https://', 'http://', $url);
     }
     
     return $url;
@@ -36,6 +40,10 @@ add_action('http_api_curl', function ($handle) {
         // If the request is to localhost, resolve it to the nginx service
         if (strpos($url, 'localhost') !== false) {
             $modified_url = str_replace('localhost', $wp_local_host, $url);
+            
+            // Replace HTTPS with HTTP for internal Docker network communication
+            $modified_url = str_replace('https://', 'http://', $modified_url);
+            
             curl_setopt($handle, CURLOPT_URL, $modified_url);
         }
     }
