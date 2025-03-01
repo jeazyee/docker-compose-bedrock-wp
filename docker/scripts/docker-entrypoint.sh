@@ -84,6 +84,13 @@ install_wordpress() {
         # Update permalink structure
         sudo -E -u www-data wp rewrite structure '/%postname%/' --url="$WP_HOME"
         
+        # Delete the default "Hello World" post
+        echo "Removing default content..."
+        sudo -E -u www-data wp post delete 1 --force --url="$WP_HOME"
+        
+        # Delete the sample page
+        sudo -E -u www-data wp post delete 2 --force --url="$WP_HOME"
+        
         echo "Installation complete! You can login at ${WP_HOME}/wp/wp-admin/"
     else
         echo "WordPress is already installed."
