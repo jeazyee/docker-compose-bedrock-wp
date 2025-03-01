@@ -3,4 +3,5 @@ deployments:
     filename: ./docker-compose.yml
     port_forwarding: 80:80
     environment:
-      - APP_URL=https://${SQUASH_DOMAIN}
+      - APP_DOMAIN=${SQUASH_DOMAIN}
+      - APP_PROTOCOL=https

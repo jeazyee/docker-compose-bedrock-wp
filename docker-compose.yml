@@ -6,7 +6,7 @@ services:
       - db
     volumes:
       - .:/var/www/html
-      - uploads:/var/www/html/web/app/uploads:rw
+      - uploads:/var/www/html/web/app/uploads:rw  
     environment:
       APP_ENV: ${APP_ENV:-development}
       APP_DEBUG: ${APP_DEBUG:-true}
@@ -75,8 +75,9 @@ services:
       - "80:80"
     environment:
       - APP_DOMAIN=${APP_DOMAIN:-localhost}
+      - APP_PROTOCOL=${APP_PROTOCOL:-http}
     command: >
-      /bin/bash -c "envsubst '$$APP_DOMAIN' < /etc/nginx/conf.d/default.conf.template > /etc/nginx/conf.d/default.conf 
+      /bin/bash -c "envsubst '$$APP_DOMAIN $$APP_PROTOCOL' < /etc/nginx/conf.d/default.conf.template > /etc/nginx/conf.d/default.conf 
       && exec nginx -g 'daemon off;'"
     volumes:
       - ./docker/nginx/default.conf:/etc/nginx/conf.d/default.conf.template:ro
