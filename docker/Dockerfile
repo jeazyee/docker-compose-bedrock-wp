@@ -67,6 +67,7 @@ RUN curl -O https://raw.githubusercontent.com/wp-cli/builds/gh-pages/phar/wp-cli
 RUN echo 'path: /var/www/html/web/wp' > /root/.wp-cli/config.yml \
     && echo 'server:' >> /root/.wp-cli/config.yml \
     && echo '  docroot: /var/www/html/web' >> /root/.wp-cli/config.yml \
+    && mkdir -p /var/www/.wp-cli \
     && cp /root/.wp-cli/config.yml /var/www/.wp-cli/config.yml \
     && chown -R www-data:www-data /var/www/.wp-cli
 
@@ -97,12 +98,15 @@ WORKDIR /var/www/html
 
 # Copy WordPress cron script
 COPY ./docker/scripts/wp-cron.sh /usr/local/bin/wp-cron.sh
+RUN chmod +x /usr/local/bin/wp-cron.sh
 
-# Copy the Bedrock files into the container
-COPY . /var/www/html
-
-# Set the ownership of the Bedrock files to the www-data user
-RUN chown -R www-data:www-data /var/www/html && find /var/www/html/ -type f -exec chmod 644 {} \; && find /var/www/html/ -type d -exec chmod 755 {} \;
+# Create app directories with correct permissions
+# We're not copying the code here - it will be mounted at runtime
+RUN mkdir -p /var/www/html/web/app/uploads \
+    && mkdir -p /var/www/html/web/app/plugins \
+    && mkdir -p /var/www/html/web/app/mu-plugins \
+    && mkdir -p /var/www/html/web/app/themes \
+    && chown -R www-data:www-data /var/www/html
 
 # Fix Git dubious ownership issue
 RUN git config --global --add safe.directory /var/www/html

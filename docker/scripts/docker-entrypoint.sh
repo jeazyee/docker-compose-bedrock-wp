@@ -101,14 +101,19 @@ install_wordpress() {
 cd /var/www/html
 composer install
 
-# Set permissions for uploads directory
-# Set the ownership of the Bedrock files to the www-data user
-sudo chown -R www-data:www-data /var/www/html && find /var/www/html/ -type f -exec chmod 644 {} \; && find /var/www/html/ -type d -exec chmod 755 {} \;
-sudo chown -R www-data:www-data /var/www/html/web/app/uploads && chmod -R 775 /var/www/html/web/app/uploads
-sudo chown -R www-data:www-data /var/www/html/web/app/themes && chmod -R 775 /var/www/html/web/app/themes
-sudo chown -R www-data:www-data /var/www/html/web/app/plugins && chmod -R 775 /var/www/html/web/app/plugins
-sudo chown -R www-data:www-data /var/www/html/web/app/mu-plugins && chmod -R 775 /var/www/html/web/app/mu-plugins
-sudo chown -R www-data:www-data /var/www/html/web/app/wp && chmod -R 775 /var/www/html/web/app/wp
+# Set permissions for directories, but exclude .git directories
+sudo find /var/www/html -type d -not -path "*/\.git*" -exec chmod 755 {} \;
+sudo find /var/www/html -type f -not -path "*/\.git*" -exec chmod 644 {} \;
+
+# Set ownership for specific directories that need www-data ownership
+sudo chown -R www-data:www-data /var/www/html/web/app/uploads 2>/dev/null || true
+sudo chown -R www-data:www-data /var/www/html/web/app/themes 2>/dev/null || true
+sudo chown -R www-data:www-data /var/www/html/web/app/plugins 2>/dev/null || true
+sudo chown -R www-data:www-data /var/www/html/web/app/mu-plugins 2>/dev/null || true
+sudo chown -R www-data:www-data /var/www/html/web/app/wp 2>/dev/null || true
+
+# Make the upload directories writable
+sudo chmod -R 775 /var/www/html/web/app/uploads 2>/dev/null || true
 
 # Setup WP-CLI for Bedrock
 setup_wp_cli
