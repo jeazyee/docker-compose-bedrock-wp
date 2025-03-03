@@ -105,6 +105,10 @@ composer install
 # Set the ownership of the Bedrock files to the www-data user
 chown -R www-data:www-data /var/www/html && find /var/www/html/ -type f -exec chmod 644 {} \; && find /var/www/html/ -type d -exec chmod 755 {} \;
 chown -R www-data:www-data /var/www/html/web/app/uploads && chmod -R 775 /var/www/html/web/app/uploads
+chown -R www-data:www-data /var/www/html/web/app/themes && chmod -R 775 /var/www/html/web/app/themes
+chown -R www-data:www-data /var/www/html/web/app/plugins && chmod -R 775 /var/www/html/web/app/plugins
+chown -R www-data:www-data /var/www/html/web/app/mu-plugins && chmod -R 775 /var/www/html/web/app/mu-plugins
+chown -R www-data:www-data /var/www/html/web/app/wp && chmod -R 775 /var/www/html/web/app/wp
 
 # Setup WP-CLI for Bedrock
 setup_wp_cli
