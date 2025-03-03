@@ -92,14 +92,6 @@ RUN echo "upload_max_filesize = 64M" > /usr/local/etc/php/conf.d/uploads.ini \
     && echo "opcache.revalidate_freq=2" >> /usr/local/etc/php/conf.d/opcache.ini \
     && echo "opcache.enable_cli=1" >> /usr/local/etc/php/conf.d/opcache.ini
 
-# Ensure correct permissions for WordPress directories
-RUN mkdir -p /var/www/html/web/app/uploads \
-    && mkdir -p /var/www/html/web/app/plugins \
-    && mkdir -p /var/www/html/web/app/themes \
-    && mkdir -p /var/www/html/web/app/mu-plugins \
-    && chown -R www-data:www-data /var/www/html/web/app \
-    && chmod -R 755 /var/www/html/web/app
-
 # Set working directory to the Bedrock project root
 WORKDIR /var/www/html
 

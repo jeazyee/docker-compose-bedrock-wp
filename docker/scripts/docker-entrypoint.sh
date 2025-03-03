@@ -97,41 +97,17 @@ install_wordpress() {
     fi
 }
 
-# Ensure proper directory permissions for WordPress
-ensure_wp_permissions() {
-    echo "Setting correct permissions for WordPress directories..."
-    
-    # Create directories if they don't exist
-    mkdir -p /var/www/html/web/app/uploads
-    mkdir -p /var/www/html/web/app/plugins
-    mkdir -p /var/www/html/web/app/themes
-    mkdir -p /var/www/html/web/app/mu-plugins
-    
-    # Set owner to www-data
-    chown -R www-data:www-data /var/www/html/web/app
-    
-    # Set correct permissions
-    find /var/www/html/web/app -type d -exec chmod 755 {} \;
-    find /var/www/html/web/app -type f -exec chmod 644 {} \;
-    
-    # Make uploads directory writable
-    chmod -R 775 /var/www/html/web/app/uploads
-    
-    echo "WordPress permissions updated."
-}
+# Install Composer dependencies
+cd /var/www/html
+composer install
 
-# Ensure uploads directory exists and is writable
-if [ ! -d /var/www/html/web/app/uploads ]; then
-    mkdir -p /var/www/html/web/app/uploads
-fi
-chown -R www-data:www-data /var/www/html/web/app/uploads
-chmod -R 775 /var/www/html/web/app/uploads
+# Set permissions for uploads directory
+# Set the ownership of the Bedrock files to the www-data user
+chown -R www-data:www-data /var/www/html && find /var/www/html/ -type f -exec chmod 644 {} \; && find /var/www/html/ -type d -exec chmod 755 {} \;
+chown -R www-data:www-data /var/www/html/web/app/uploads && chmod -R 775 /var/www/html/web/app/uploads
 
 # Setup WP-CLI for Bedrock
 setup_wp_cli
-
-cd /var/www/html
-composer install
 
 # If the first argument is "wp"
 if [ "$1" = "wp" ]; then
@@ -153,9 +129,6 @@ elif [ "${1#-}" = "php-fpm" ]; then
     
     # Setup WordPress cron
     setup_wp_cron
-    
-    # Ensure proper permissions
-    ensure_wp_permissions
     
     # Install WordPress if it's not installed
     if [ "${WP_AUTO_INSTALL:-false}" = "true" ]; then
