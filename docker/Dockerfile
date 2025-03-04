@@ -100,14 +100,6 @@ WORKDIR /var/www/html
 COPY ./docker/scripts/wp-cron.sh /usr/local/bin/wp-cron.sh
 RUN chmod +x /usr/local/bin/wp-cron.sh
 
-# Create app directories with correct permissions
-# We're not copying the code here - it will be mounted at runtime
-RUN mkdir -p /var/www/html/web/app/uploads \
-    && mkdir -p /var/www/html/web/app/plugins \
-    && mkdir -p /var/www/html/web/app/mu-plugins \
-    && mkdir -p /var/www/html/web/app/themes \
-    && chown -R www-data:www-data /var/www/html
-
 # Fix Git dubious ownership issue
 RUN git config --global --add safe.directory /var/www/html
 

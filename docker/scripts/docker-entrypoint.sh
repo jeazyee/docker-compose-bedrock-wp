@@ -101,16 +101,12 @@ install_wordpress() {
 cd /var/www/html
 composer install
 
-# Set permissions for directories, but exclude .git directories
-sudo find /var/www/html -type d -not -path "*/\.git*" -exec chmod 755 {} \;
-sudo find /var/www/html -type f -not -path "*/\.git*" -exec chmod 644 {} \;
+# Change ownership of the mounted directory to www-data (inside the container only)
+chown -R www-data:www-data /var/www/html
 
-# Set ownership for specific directories that need www-data ownership
-sudo chown -R www-data:www-data /var/www/html/web/app/uploads 2>/dev/null || true
-sudo chown -R www-data:www-data /var/www/html/web/app/themes 2>/dev/null || true
-sudo chown -R www-data:www-data /var/www/html/web/app/plugins 2>/dev/null || true
-sudo chown -R www-data:www-data /var/www/html/web/app/mu-plugins 2>/dev/null || true
-sudo chown -R www-data:www-data /var/www/html/web/app/wp 2>/dev/null || true
+# Set permissions for directories, but exclude .git directories
+find /var/www/html -type d -not -path "*/\.git*" -exec chmod 755 {} \;
+find /var/www/html -type f -not -path "*/\.git*" -exec chmod 644 {} \;
 
 # Make the upload directories writable
 sudo chmod -R 775 /var/www/html/web/app/uploads 2>/dev/null || true

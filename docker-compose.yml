@@ -7,10 +7,7 @@ services:
     volumes:
       - .:/var/www/html:delegated
       - uploads:/var/www/html/web/app/uploads:delegated
-      # Exclude .git directory from container
-      - /var/www/html/.git
-    deploy:
-      
+    user: www-data:www-data
     environment:
       APP_ENV: ${APP_ENV:-development}
       APP_DEBUG: ${APP_DEBUG:-true}
