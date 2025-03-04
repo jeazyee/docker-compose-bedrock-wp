@@ -1,6 +1,6 @@
 FROM php:8.2-fpm
 
-# Install system dependencies including cron
+# Install system dependencies including nginx and cron
 RUN apt-get update && apt-get install -y \
     default-mysql-client \
     libpng-dev \
@@ -20,6 +20,8 @@ RUN apt-get update && apt-get install -y \
     curl \
     cron \
     sudo \
+    nginx \
+    supervisor \
     && rm -rf /var/lib/apt/lists/*
 
 # Configure and install PHP extensions
@@ -96,6 +98,16 @@ RUN echo "upload_max_filesize = 64M" > /usr/local/etc/php/conf.d/uploads.ini \
 # Set working directory to the Bedrock project root
 WORKDIR /var/www/html
 
+# Create directory for nginx pid file
+RUN mkdir -p /run/nginx
+
+# Copy nginx configuration
+COPY ./docker/nginx/nginx.conf /etc/nginx/nginx.conf
+COPY ./docker/nginx/default.conf /etc/nginx/conf.d/default.conf
+
+# Configure supervisor
+COPY ./docker/supervisor/supervisord.conf /etc/supervisor/conf.d/supervisord.conf
+
 # Copy WordPress cron script
 COPY ./docker/scripts/wp-cron.sh /usr/local/bin/wp-cron.sh
 RUN chmod +x /usr/local/bin/wp-cron.sh
@@ -108,4 +120,7 @@ COPY ./docker/scripts/docker-entrypoint.sh /usr/local/bin/
 RUN chmod +x /usr/local/bin/docker-entrypoint.sh
 
 ENTRYPOINT ["docker-entrypoint.sh"]
-CMD ["php-fpm"]
+CMD ["/usr/bin/supervisord", "-c", "/etc/supervisor/conf.d/supervisord.conf"]
+
+# Expose port 80
+EXPOSE 80

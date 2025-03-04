@@ -1,100 +1,47 @@
 services:
   bedrock:
     build:
+      context: .
       dockerfile: ./docker/Dockerfile
-    depends_on:
-      - db
     volumes:
-      - .:/var/www/html:delegated
-      - uploads:/var/www/html/web/app/uploads:delegated
-    user: root:root
-    environment:
-      APP_ENV: ${APP_ENV:-development}
-      APP_DEBUG: ${APP_DEBUG:-true}
-
-      APP_DOMAIN: ${APP_DOMAIN:-localhost}
-      APP_PROTOCOL: ${APP_PROTOCOL:-http}
-      APP_URL: ${APP_URL:-${APP_PROTOCOL:-http}://${APP_DOMAIN:-localhost}}
-
-      WP_ENV: ${APP_ENV:-development}
-      WP_HOME: ${APP_URL:-${APP_PROTOCOL:-http}://${APP_DOMAIN:-localhost}}
-      WP_SITEURL: ${APP_URL:-${APP_PROTOCOL:-http}://${APP_DOMAIN:-localhost}}/wp
-      DISABLE_WP_CRON: ${DISABLE_WP_CRON:-true}
-
-      # WordPress installation settings (minimal)
-      WP_AUTO_INSTALL: ${WP_AUTO_INSTALL:-true}
-      WP_TITLE: ${WP_TITLE:-Bedrock WordPress}
-      WP_ADMIN_USER: ${WP_ADMIN_USER:-admin}
-      WP_ADMIN_PASSWORD: ${WP_ADMIN_PASSWORD:-admin}
-      WP_ADMIN_EMAIL: ${WP_ADMIN_EMAIL:-admin@example.com}
-      WP_FIX_RECOVERY_EVENT: ${WP_FIX_RECOVERY_EVENT:-false}
-
-      # Needed for the internal API routing
-      WP_LOCAL_HOST: nginx
-
-      DB_NAME: ${DB_NAME:-bedrock}
-      DB_USER: ${DB_USER:-user}
-      DB_PASSWORD: ${DB_PASSWORD:-password}
-      DB_HOST: db
-
-      AUTH_KEY: ${AUTH_KEY:-generateme}
-      SECURE_AUTH_KEY: ${SECURE_AUTH_KEY:-generateme}
-      LOGGED_IN_KEY: ${LOGGED_IN_KEY:-generateme}
-      NONCE_KEY: ${NONCE_KEY:-generateme}
-      AUTH_SALT: ${AUTH_SALT:-generateme}
-      SECURE_AUTH_SALT: ${SECURE_AUTH_SALT:-generateme}
-      LOGGED_IN_SALT: ${LOGGED_IN_SALT:-generateme}
-      NONCE_SALT: ${NONCE_SALT:-generateme}
-    restart: always
-    networks:
-      - wordpress_net
-
-  db:
-    image: mariadb:11.4
-    volumes:
-      - database:/var/lib/mysql
-    environment:
-      MYSQL_DATABASE: ${DB_NAME:-bedrock}
-      MYSQL_USER: ${DB_USER:-user}
-      MYSQL_PASSWORD: ${DB_PASSWORD:-password}
-      MYSQL_ROOT_PASSWORD: ${DB_ROOT_PASSWORD:-root}
-    restart: always
-    networks:
-      - wordpress_net
-    healthcheck:
-      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-u", "$$MYSQL_USER", "--password=$$MYSQL_PASSWORD"]
-      interval: 5s
-      timeout: 5s
-      retries: 5
-      start_period: 10s
-
-  nginx:
-    image: nginx:1.26.3
-    depends_on:
-      - bedrock
+      - .:/var/www/html:cached
     ports:
       - ${APP_PORT:-80}:80
     environment:
+      - APP_ENV=${APP_ENV:-development}
+      - APP_DEBUG=${APP_DEBUG:-true}
       - APP_DOMAIN=${APP_DOMAIN:-localhost}
-      - APP_PROTOCOL=${APP_PROTOCOL:-http}
-    command: >
-      /bin/bash -c "envsubst '$$APP_DOMAIN $$APP_PROTOCOL' < /etc/nginx/conf.d/default.conf.template > /etc/nginx/conf.d/default.conf 
-      && exec nginx -g 'daemon off;'"
+      - DB_HOST=db
+      - DB_NAME=${DB_NAME:-bedrock}
+      - DB_USER=${DB_USER:-user}
+      - DB_PASSWORD=${DB_PASSWORD:-password}
+      - WP_ENV=${APP_ENV:-development}
+      - WP_HOME=http://${APP_DOMAIN:-localhost}
+      - WP_SITEURL=http://${APP_DOMAIN:-localhost}/wp
+      - AUTH_KEY=${AUTH_KEY}
+      - SECURE_AUTH_KEY=${SECURE_AUTH_KEY}
+      - LOGGED_IN_KEY=${LOGGED_IN_KEY}
+      - NONCE_KEY=${NONCE_KEY}
+      - AUTH_SALT=${AUTH_SALT}
+      - SECURE_AUTH_SALT=${SECURE_AUTH_SALT}
+      - LOGGED_IN_SALT=${LOGGED_IN_SALT}
+      - NONCE_SALT=${NONCE_SALT}
+    depends_on:
+      - db
+
+  db:
+    image: mysql:8.0
     volumes:
-      - ./docker/nginx/default.conf:/etc/nginx/conf.d/default.conf.template:ro
-      - ./docker/nginx/nginx.conf:/etc/nginx/nginx.conf:ro
-      - .:/var/www/html:delegated
-      - uploads:/var/www/html/web/app/uploads:delegated
-      # Exclude .git directory from container
-      - /var/www/html/.git
+      - db_data:/var/lib/mysql
     restart: always
-    networks:
-      - wordpress_net
+    environment:
+      - MYSQL_DATABASE=${DB_NAME:-bedrock}
+      - MYSQL_USER=${DB_USER:-user}
+      - MYSQL_PASSWORD=${DB_PASSWORD:-password}
+      - MYSQL_ROOT_PASSWORD=${DB_ROOT_PASSWORD:-root}
+    command: --default-authentication-plugin=mysql_native_password
+    ports:
+      - "3306:3306"
 
 volumes:
-  database:
-  uploads:
-
-networks:
-  wordpress_net:
-    driver: bridge
+  db_data:

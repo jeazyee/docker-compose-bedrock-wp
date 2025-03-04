@@ -1,6 +1,12 @@
 #!/bin/bash
 set -e
 
+# Process Nginx template with environment variables
+if [ -f "/etc/nginx/conf.d/default.conf" ]; then
+    envsubst '${APP_DOMAIN}' < /etc/nginx/conf.d/default.conf > /etc/nginx/conf.d/default.conf.tmp
+    mv /etc/nginx/conf.d/default.conf.tmp /etc/nginx/conf.d/default.conf
+fi
+
 # Add hostname entries for internal network resolution
 echo "127.0.0.1 localhost" >> /etc/hosts
 echo "$(getent hosts nginx | awk '{ print $1 }') ${APP_DOMAIN}" >> /etc/hosts
@@ -113,6 +119,14 @@ sudo find /var/www/html -path '/var/www/html/.git' -prune -o -type f -not -name 
 # Setup WP-CLI for Bedrock
 setup_wp_cli
 
+# Set ownership of web directory to www-data
+chown -R www-data:www-data /var/www/html
+
+# Add wp-cron to the system crontab if not already added
+if ! crontab -l | grep -q "wp-cron.sh"; then
+    (crontab -l 2>/dev/null; echo "*/15 * * * * /usr/local/bin/wp-cron.sh") | crontab -
+fi
+
 # If the first argument is "wp"
 if [ "$1" = "wp" ]; then
     # Wait for database to be ready
@@ -148,6 +162,11 @@ elif [ "${1#-}" = "php-fpm" ]; then
     fi
     
     >&2 echo "Starting PHP-FPM server..."
+fi
+
+# First arg is `-f` or `--some-option`
+if [ "${1#-}" != "$1" ]; then
+    set -- php-fpm "$@"
 fi
 
 # Pass control to the CMD
