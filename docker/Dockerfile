@@ -22,6 +22,7 @@ RUN apt-get update && apt-get install -y \
     sudo \
     nginx \
     supervisor \
+    gettext-base \
     && rm -rf /var/lib/apt/lists/*
 
 # Configure and install PHP extensions
@@ -46,13 +47,9 @@ RUN docker-php-ext-configure gd --with-freetype --with-jpeg --with-webp \
 RUN pecl install imagick \
     && docker-php-ext-enable imagick
 
-# Install APCu for object caching
-RUN pecl install apcu \
-    && docker-php-ext-enable apcu
-
-# Install redis for object caching (optional but recommended)
-RUN pecl install redis \
-    && docker-php-ext-enable redis
+# Install APCu and Redis for object caching
+RUN pecl install apcu redis \
+    && docker-php-ext-enable apcu redis
 
 # Install Composer
 COPY --from=composer:latest /usr/bin/composer /usr/bin/composer
@@ -98,12 +95,12 @@ RUN echo "upload_max_filesize = 64M" > /usr/local/etc/php/conf.d/uploads.ini \
 # Set working directory to the Bedrock project root
 WORKDIR /var/www/html
 
-# Create directory for nginx pid file
-RUN mkdir -p /run/nginx
+# Create directory for nginx pid file and logs
+RUN mkdir -p /run/nginx /var/log/supervisor
 
 # Copy nginx configuration
 COPY ./docker/nginx/nginx.conf /etc/nginx/nginx.conf
-COPY ./docker/nginx/default.conf /etc/nginx/conf.d/default.conf
+COPY ./docker/nginx/default.conf /etc/nginx/conf.d/default.conf.template
 
 # Configure supervisor
 COPY ./docker/supervisor/supervisord.conf /etc/supervisor/conf.d/supervisord.conf
@@ -118,6 +115,16 @@ RUN git config --global --add safe.directory /var/www/html
 # Make the entrypoint script executable
 COPY ./docker/scripts/docker-entrypoint.sh /usr/local/bin/
 RUN chmod +x /usr/local/bin/docker-entrypoint.sh
+
+# Create directories that might be mounted
+RUN mkdir -p /var/www/html/web/app/uploads \
+    /var/www/html/web/app/plugins \
+    /var/www/html/web/app/themes \
+    && chown -R www-data:www-data /var/www/html
+
+# Create health check script
+COPY ./docker/scripts/health-check.sh /usr/local/bin/health-check.sh
+RUN chmod +x /usr/local/bin/health-check.sh
 
 ENTRYPOINT ["docker-entrypoint.sh"]
 CMD ["/usr/bin/supervisord", "-c", "/etc/supervisor/conf.d/supervisord.conf"]

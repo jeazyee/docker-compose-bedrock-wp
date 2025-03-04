@@ -1,6 +1,44 @@
 #!/bin/bash
 set -e
 
+# Process environment variables
+if [ -n "$COOLIFY_APP_DOMAIN" ]; then
+    export APP_DOMAIN="$COOLIFY_APP_DOMAIN"
+elif [ -z "$APP_DOMAIN" ]; then
+    export APP_DOMAIN="localhost"
+fi
+
+if [ -n "$COOLIFY_APP_URL" ]; then
+    export APP_URL="$COOLIFY_APP_URL"
+elif [ -z "$APP_URL" ]; then
+    export APP_URL="http://$APP_DOMAIN"
+fi
+
+# Process database settings from Coolify
+if [ -n "$COOLIFY_DATABASE_URL" ]; then
+    # Parse database URL (mysql://user:pass@host:port/dbname)
+    regex="mysql://([^:]+):([^@]+)@([^:/]+)(:([0-9]+))?/([^?]+)"
+    if [[ $COOLIFY_DATABASE_URL =~ $regex ]]; then
+        export DB_USER="${BASH_REMATCH[1]}"
+        export DB_PASSWORD="${BASH_REMATCH[2]}"
+        export DB_HOST="${BASH_REMATCH[3]}"
+        export DB_PORT="${BASH_REMATCH[5]:-3306}"
+        export DB_NAME="${BASH_REMATCH[6]}"
+    fi
+fi
+
+# Create WordPress salts if not provided
+if [ -z "$AUTH_KEY" ]; then
+    export AUTH_KEY=$(openssl rand -hex 64)
+    export SECURE_AUTH_KEY=$(openssl rand -hex 64)
+    export LOGGED_IN_KEY=$(openssl rand -hex 64)
+    export NONCE_KEY=$(openssl rand -hex 64)
+    export AUTH_SALT=$(openssl rand -hex 64)
+    export SECURE_AUTH_SALT=$(openssl rand -hex 64)
+    export LOGGED_IN_SALT=$(openssl rand -hex 64)
+    export NONCE_SALT=$(openssl rand -hex 64)
+fi
+
 # Process Nginx template with environment variables
 if [ -f "/etc/nginx/conf.d/default.conf" ]; then
     envsubst '${APP_DOMAIN}' < /etc/nginx/conf.d/default.conf > /etc/nginx/conf.d/default.conf.tmp
