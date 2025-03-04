@@ -7,7 +7,7 @@ services:
     volumes:
       - .:/var/www/html:delegated
       - uploads:/var/www/html/web/app/uploads:delegated
-    user: www-data:www-data
+    user: root:root
     environment:
       APP_ENV: ${APP_ENV:-development}
       APP_DEBUG: ${APP_DEBUG:-true}

@@ -101,15 +101,14 @@ install_wordpress() {
 cd /var/www/html
 composer install
 
-# Change ownership of the mounted directory to www-data (inside the container only)
-chown -R www-data:www-data /var/www/html
+# Change ownership of the mounted directory to www-data, excluding .git and hidden files
+sudo find /var/www/html -path '/var/www/html/.git' -prune -o -type f -not -name '.*' -exec chown www-data:www-data {} +
 
-# Set permissions for directories, but exclude .git directories
-find /var/www/html -type d -not -path "*/\.git*" -exec chmod 755 {} \;
-find /var/www/html -type f -not -path "*/\.git*" -exec chmod 644 {} \;
+# Set permissions for directories, excluding .git directories
+sudo find /var/www/html -path '/var/www/html/.git' -prune -o -type d -not -name '.*' -exec chmod 755 {} +
 
-# Make the upload directories writable
-sudo chmod -R 775 /var/www/html/web/app/uploads 2>/dev/null || true
+# Set permissions for files, excluding .git and hidden files
+sudo find /var/www/html -path '/var/www/html/.git' -prune -o -type f -not -name '.*' -exec chmod 644 {} +
 
 # Setup WP-CLI for Bedrock
 setup_wp_cli
