@@ -73,7 +73,7 @@ services:
     depends_on:
       - bedrock
     ports:
-      - "80:80"
+      - ${APP_PORT:-80}:80
     environment:
       - APP_DOMAIN=${APP_DOMAIN:-localhost}
       - APP_PROTOCOL=${APP_PROTOCOL:-http}
